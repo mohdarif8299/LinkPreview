@@ -33,6 +33,9 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.github.ponnamkarthik.richlinkpreview.RichLinkView;
+import io.github.ponnamkarthik.richlinkpreview.ViewListener;
+
 public class MainActivity extends AppCompatActivity {
     EditText editText;
     Button upload;
@@ -51,22 +54,25 @@ public class MainActivity extends AppCompatActivity {
     String previewUrl;
     ImageView linkImg;
     boolean isNextEnabled = true;
+    RichLinkView richLinkView;
     boolean previewPresent = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         editText = findViewById(R.id.desc);
         upload = findViewById(R.id.upload);
+        richLinkView = (RichLinkView) findViewById(R.id.richLinkView);
         uploadText = findViewById(R.id.textView8);
         submit = findViewById(R.id.button);
         preview_view = findViewById(R.id.preview_view);
         preview = findViewById(R.id.preview);
-        linkImg = findViewById(R.id.contentImg);
+        //linkImg = findViewById(R.id.contentImg);
         linkClose = findViewById(R.id.close);
         linkTitle = findViewById(R.id.title);
-        linkDesc = findViewById(R.id.linkDesc);
-        links= new ArrayList<>();
+        //linkDesc = findViewById(R.id.linkDesc);
+        links = new ArrayList<>();
         textCrawler = new TextCrawler();
         linkClose.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -95,13 +101,17 @@ public class MainActivity extends AppCompatActivity {
             @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (s.equals("")) {
-                    preview_view.setVisibility(View.GONE);
-                    preview.setVisibility(View.GONE);
-                    upload.setVisibility(View.VISIBLE);
-                    uploadText.setVisibility(View.VISIBLE);
-                    submit.setBackground(getDrawable(R.drawable.revidlybutton1));
-                    return;
+                try {
+                    if (s.equals("")) {
+                        preview_view.setVisibility(View.GONE);
+                        preview.setVisibility(View.GONE);
+                        upload.setVisibility(View.VISIBLE);
+                        uploadText.setVisibility(View.VISIBLE);
+                        isNextEnabled = true;
+                        submit.setBackground(getDrawable(R.drawable.revidlybutton1));
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
 
@@ -111,47 +121,89 @@ public class MainActivity extends AppCompatActivity {
                 if (TextUtils.isEmpty(s.toString().trim())) {
                     preview_view.setVisibility(View.GONE);
                     preview.setVisibility(View.GONE);
+                    richLinkView.setVisibility(View.GONE);
                     upload.setVisibility(View.VISIBLE);
                     uploadText.setVisibility(View.VISIBLE);
+                    isNextEnabled = true;
                     submit.setBackground(getDrawable(R.drawable.revidlybutton1));
-                }
-                else {
+                } else {
                     if (upload.isClickable()) {
                         pullLinks(s.toString());
                         if (links.size() > 0) {
                             try {
-                                textCrawler.makePreview(callback, links.get(0).toString());
-                                new CountDownTimer(10000,1000) {
+                                preview_view.setVisibility(View.VISIBLE);
+                                isNextEnabled = false;
+                                upload.setVisibility(View.GONE);
+                                uploadText.setVisibility(View.GONE);
+                                submit.setBackground(getDrawable(R.drawable.revidlybutton1_disabled));
+                                richLinkView.setLink(links.get(0), new ViewListener() {
                                     @Override
-                                    public void onTick(long millisUntilFinished) {
-
+                                    public void onSuccess(boolean status) {
+                                        Log.d("Preview Response", status + "");
+                                        if (status) {
+                                            preview.setVisibility(View.VISIBLE);
+                                            preview_view.setVisibility(View.GONE);
+                                            isNextEnabled = true;
+                                            uploadText.setVisibility(View.GONE);
+                                            upload.setVisibility(View.GONE);
+                                            submit.setBackground(getDrawable(R.drawable.revidlybutton1));
+                                        }
+                                        else{
+                                            preview_view.setVisibility(View.GONE);
+                                            isNextEnabled = true;
+                                            richLinkView.setVisibility(View.GONE);
+                                            upload.setVisibility(View.VISIBLE);
+                                            uploadText.setVisibility(View.VISIBLE);
+                                            submit.setBackground(getDrawable(R.drawable.revidlybutton1));
+                                            preview.setVisibility(View.GONE);
+                                        }
                                     }
-
                                     @Override
-                                    public void onFinish() {
-                                        preview_view.setVisibility(View.GONE);
-                                        Toast.makeText(MainActivity.this, "Unable to Fetch", Toast.LENGTH_SHORT).show();
+                                    public void onError(Exception e) {
+                                        try {
+                                            preview_view.setVisibility(View.GONE);
+                                            isNextEnabled = true;
+                                            richLinkView.setVisibility(View.GONE);
+                                            upload.setVisibility(View.VISIBLE);
+                                            uploadText.setVisibility(View.VISIBLE);
+                                            submit.setBackground(getDrawable(R.drawable.revidlybutton1));
+                                            preview.setVisibility(View.GONE);
+                                            e.printStackTrace();
+                                        } catch (Exception e1) {
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    preview_view.setVisibility(View.GONE);
+                                                    isNextEnabled = true;
+                                                    richLinkView.setVisibility(View.GONE);
+                                                    upload.setVisibility(View.VISIBLE);
+                                                    uploadText.setVisibility(View.VISIBLE);
+                                                    submit.setBackground(getDrawable(R.drawable.revidlybutton1));
+                                                    preview.setVisibility(View.GONE);
+                                                }
+                                            });
+                                        }
                                     }
-                                }.start();
-
+                                });
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
+                        }
+                        else {
+
                         }
                     }
                 }
             }
         });
     }
+
     private ArrayList pullLinks(String text) {
-        String regex = "\\(?\\b(http://|www[.])[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|]";
-        //  Pattern p = Pattern.compile(regex);
         Pattern p = Pattern.compile(
                 "(?:^|[\\W])((ht|f)tp(s?):\\/\\/|www\\.)"
                         + "(([\\w\\-]+\\.){1,}?([\\w\\-.~]+\\/?)*"
                         + "[\\p{Alnum}.,%_=?&#\\-+()\\[\\]\\*$~@!:/{};']*)",
                 Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
-
         Matcher m = p.matcher(text);
         links.clear();
         while (m.find()) {
@@ -161,92 +213,8 @@ public class MainActivity extends AppCompatActivity {
                 urlStr = urlStr.substring(1, urlStr.length() - 1);
             }
             links.add(0, urlStr);
+            Log.d("links", links + "");
         }
         return links;
     }
-    private LinkPreviewCallback callback = new LinkPreviewCallback() {
-        @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-        @Override
-        public void onPre() {
-            //   if (!isPreviewLoading) {
-            preview_view.setVisibility(View.VISIBLE);
-            upload.setVisibility(View.GONE);
-            uploadText.setVisibility(View.GONE);
-            submit.setBackground(getDrawable(R.drawable.revidlybutton1_disabled));
-            isNextEnabled = false;
-//                isPreviewLoading = true;
-//            }
-        }
-        @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-        @Override
-        public void onPos(final SourceContent sourceContent, boolean b) {
-            Log.d("PreviewResult",b+"");
-            if (b) {
-                Log.d("LinksList",links+"");
-                //  links.clear();
-                Toast.makeText(MainActivity.this, "Unable to Fetch", Toast.LENGTH_SHORT).show();
-                preview_view.setVisibility(View.GONE);
-                preview.setVisibility(View.GONE);
-                upload.setVisibility(View.VISIBLE);
-                submit.setBackground(getDrawable(R.drawable.revidlybutton1));
-                uploadText.setVisibility(View.VISIBLE);
-            }
-            else {
-                Log.d("LinksList",links+"");
-                if (sourceContent.getFinalUrl() == null) {
-                    Toast.makeText(MainActivity.this, "Failed", Toast.LENGTH_SHORT).show();
-                } else {
-                    currentImageSet = new Bitmap[sourceContent.getImages().size()];
-                    if (sourceContent.getTitle().equals("")) {
-                        sourceContent.setTitle("No Title");
-                    } else {
-                        UrlImageViewHelper.setUrlDrawable(linkImg, sourceContent.getImages().get(0), new UrlImageViewCallback() {
-                            @Override
-                            public void onLoaded(ImageView imageView, Bitmap loadedBitmap, String url, boolean loadedFromCache) {
-                                if (loadedBitmap != null) {
-                                  //  currentImage = loadedBitmap;
-                                    currentImageSet[0] = loadedBitmap;
-                                    Log.d("Add_answer", "inside if");
-                                    Log.d("Add_answer", "ANS: " + currentImageSet);
-                                    Log.d("Add_answer", "URL: " + url);
-                                    previewImageURL = url;
-                                    Log.d("Add_Answer", "link Image = " + linkImg + "Current Image = " + linkImg);
-//                            imageView.setImageURI(Uri.parse(url));
-//                            imageView.setImageBitmap(getBitmapFromURL(url));
-                                    try {
-                                        Glide.with(getApplicationContext())
-                                                .load(new URL(url))
-                                                .into(linkImg);
-                                    } catch (MalformedURLException e) {
-                                        e.printStackTrace();
-                                    }
-                                } else {
-                                    Log.d("Add_answer", "Outside if");
-                                }
-                            }
-                        });
-                        linkTitle.setText(sourceContent.getTitle());
-                        Log.d("Add_answer", "linkTitle : sourceContent Title = " + sourceContent.getTitle());
-              //          url = sourceContent.getUrl();
-                        Log.d("Add_answer", "url = sourceContent.getUrl() = " + sourceContent.getUrl());
-                        linkDesc.setText(sourceContent.getDescription());
-                        Log.d("Add_answer", "linkDesc : sourceContent Desc= " + sourceContent.getDescription());
-                        preview.setVisibility(View.VISIBLE);
-                        linkClose.setVisibility(View.VISIBLE);
-                        upload.setVisibility(View.GONE);
-                        uploadText.setVisibility(View.GONE);
-                        previewDesc = sourceContent.getDescription();
-                        previewTitle = sourceContent.getTitle();
-                        previewUrl = sourceContent.getUrl();
-                        previewPresent = true;
-                        preview_view.setVisibility(View.GONE);
-                        submit.setBackground(getDrawable(R.drawable.revidlybutton1));
-
-                        preview_view.setVisibility(View.GONE);
-                        links.clear();
-                    }
-                }
-            }
-        }
-    };
 }
