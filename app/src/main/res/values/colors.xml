@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#008577</color>
+    <color name="colorPrimaryDark">#00574B</color>
+    <color name="colorAccent">#DF2368</color>
+
+    <color name="seekbar">#45000000</color>
+    <color name="black_overlay">#8BE38E8E</color>
+
+
+    <color name="white_transparent">#80ffffff</color>
+
+    <color name="tabtextcolor">#000</color>
+
+    <color name="facebook">#ffffff</color>
+    <color name="google">#d34836</color>
+
+    <color name="color_facebook_btn">#45619d</color>
+    <color name="color_google_text">#fff</color>
+
+    <color name="black">#000</color>
+    <color name="color1">#ffffff</color>
+
+    <color name="reddish_orange">#EE2929</color>
+    <color name="light_GREY">#cccbcb</color>
+    <color name="lime">#B2F843</color>
+    <color name="pinkish">#FA387B</color>
+    <!--<color name="white">#E9E6E6</color>-->
+
+
+    <color name="grey">#7E7E7E</color>
+    <color name="white">#ffffff</color>
+    <color name="revidlyredearlier">#ed765e</color>
+    <color name="revidlyred">#a8a8a8</color>
+    <color name="roundedBorderClan">#c8c8c8</color>
+    <color name="roundedBorderVote">#c8c8c8</color>
+    <color name="textClan">#000000</color>
+    <color name="textVote">#666666</color>
+    <color name="questiongrey">#bfe0e0e0</color>
+    <color name="text_grey">#bfcccbcb</color>
+
+</resources>

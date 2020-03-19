@@ -1,0 +1,2 @@
+rootProject.name='LinkPreview'
+include ':app'
